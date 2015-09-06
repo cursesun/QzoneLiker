@@ -159,8 +159,12 @@ def MsgHandler():
             abstime = re.search(r'data-abstime="(\d*?)"',split_string[i+1])
             if abstime is None:
                 continue
-            like(btn_string.group(1),btn_string.group(2),fkey[i],abstime.group(1))
-            logging.info('已点赞'+btn_string.group(2))
+            #like(btn_string.group(1),btn_string.group(2),fkey[i],abstime.group(1))
+	    content = re.search(r'<div class="f-info">(.{0,100})</div>',split_string[i+1])
+	    if content!=None:
+		logging.info('已点赞'+btn_string.group(2)+'\t'+ content.group(1))
+	    else:
+	        logging.info('已点赞'+btn_string.group(2))
         except Exception, e:
             logging.error(str(e))
 
@@ -170,7 +174,7 @@ def MsgHandler():
 
 if __name__ == "__main__":
     vpath = './v.jpg'
-    qq = 0
+    qq = 2421181819
     if len(sys.argv) > 1:
         vpath = sys.argv[1]
     if len(sys.argv) > 2:
