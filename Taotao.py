@@ -16,7 +16,7 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 # CONFIGURATION FIELD
-checkFrequency = 10
+checkFrequency = 1
 #check every k seconds
 # STOP EDITING HERE
 HttpClient_Ist = HttpClient()
@@ -121,60 +121,144 @@ def getGTK(skey):
 
 def saveemotion(values):
     try:
-        cur.executemany('insert into qz_emotion(`qq`,`tid`,`content`,`create_time`,`comment_num`) values(%s,%s,%s,%s,%s)',values)
+        cur.executemany('insert into qz_emotion(`qq`,`name`,`tid`,`content`,`create_time`,`comment_num`) values(%s,%s,%s,%s,%s,%s)',values)
         conn.commit()
     except MySQLdb.Error,e:
         print "Mysql Error %d: %s" % (e.args[0], e.args[1])
-
 def savecomment(values):
     try:
-        cur.executemany('insert into em_comment(`qq`,`tid`,`name`,`content`,`create_time`) values(%s,%s,%s,%s,%s)',values)
+        cur.executemany('insert into qz_comment(`qq`,`qq_name`,`comment_qq`,`tid`,`comment_name`,`content`,`create_time`) values(%s,%s,%s,%s,%s,%s,%s)',values)
 	conn.commit()
     except MySQLdb.Error,e:
         print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+def updateFlag(who):
+    try:
+        cur.execute('update qz_friend set flag="1" where qq='+str(who))
+	conn.commit()
+    except MySQLdb.Error,e:
+        print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+def savefriend(value):
+    try:
+        cur.execute('insert into qz_friend(`qq`,`who`,`name`,`sex`,`address`,`online`) values(%s,%s,%s,%s,%s,%s)  ON DUPLICATE KEY UPDATE online=0',value)
+	conn.commit()
+    except MySQLdb.Error,e:
+        print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+def getfriends(who):
+    try:
+        aa=cur.execute('select * from qz_friend where flag=0 and who='+str(who))
+	print "get ",who," friends count ",aa
+	info = cur.fetchmany(aa)
+	return info
+    except MySQLdb.Error,e:
+        print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+    return None
+def savechecked(value):
+    try:
+        cur.execute('insert into qz_checked(`qq`,`name`) values(%s,%s)',value)
+	conn.commit()
+    except MySQLdb.Error,e:
+        print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+def getchecked(qq):
+    try:
+        count=cur.execute('select * from qz_checked where qq='+str(qq))
+	return count
+    except MySQLdb.Error,e:
+        print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+    return 1
 
-def TaotHandler(qq,uin,pos,num):
+def GetVisitor(who):
+    refer="http://ctc.qzs.qq.com/qzone/v6/friend_manage/visitors.html"
+    html = HttpClient_Ist.Get('http://g.qzone.qq.com/cgi-bin/friendshow/cgi_get_visitor_simple?uin={0}&mask=2&g_tk={1}&page=1&fupdate=1'.format(who,str(getGTK(skey))), refer)
+    html=html.replace('_Callback(','')
+    html=html.replace(');','')
+    data=json.loads(html)
+    friends=[]
+    if data['message']=='succ':
+        if data['data']['count']>0:
+            for i in range(0,len(data['data']['items'])):
+	        uin=data['data']['items'][i]['uin']
+		name=data['data']['items'][i]['name']
+		online=data['data']['items'][i]['online']
+		visit_time=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(data['data']['items'][i]['time']))
+		friends.append((uin,who,name,'','',online))
+    return friends
+
+def TaotHandler(uin,pos,num):
     refer="http://cnc.qzs.qq.com/qzone/app/mood_v6/html/index.html"
     html = HttpClient_Ist.Get('http://taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6?uin={0}&inCharset=utf-8&outCharset=utf-8&hostUin={1}&notice=0&sort=0&pos={2}&num={3}&cgi_host=http%3A%2F%2Ftaotao.qq.com%2Fcgi-bin%2Femotion_cgi_msglist_v6&code_version=1&format=jsonp&need_private_comment=1&g_tk={4}'.format(uin,qq,pos,num,str(getGTK(skey))), refer)
     html=html.replace('_Callback(','')
     html=html.replace(');','')
-    data=json.loads(html)
-    emotions=[]
-    comments=[]
-    #这里要判断是否存在msglist，不存在则不再执行
-    for i in range(0,len(data['msglist'])):
-        if data['msglist'][i]==None:
-	    break
-	content=data['msglist'][i]['content']
-	create_time=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(data['msglist'][i]['created_time']))
-	cmtnum=data['msglist'][i]['cmtnum']
-	tid=str(data['msglist'][i]['tid'])
-	emotions.append((qq,tid,content,create_time,cmtnum))
-	if int(cmtnum)>0:
-	    commentlist=data['msglist'][i]['commentlist']
-            for j in range(0,len(commentlist)):
-	        if commentlist[j]==None:
-	            break;
-	        c_qq=str(commentlist[j]['uin'])
-	        c_content=str(commentlist[j]['content'])
-	        c_createTime=str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(commentlist[j]['create_time'])))
-	        c_name=str(commentlist[j]['name'])
-	        comments.append((c_qq,tid,c_name,c_content,c_createTime))
-	        logging.info(c_qq+tid+c_name+c_content+c_createTime+str(len(comments)))
-    if len(emotions)>0:
-        saveemotion(emotions)
-    if len(comments)>0:
-        savecomment(comments)
-    print "qq:",uni,"pos:",pos,"...save emotion count is ",len(emotions)," comment count is ",len(comments)
-    logging.info("qq:"+str(uni)+"pos:"+str(pos)+" over..")
-    
+    if 'msglist' not in html:
+        raise StandardError("msglist not found")
+    if 'msglist' in html:
+        data=json.loads(html)
+        emotions=[]
+        comments=[]
+        for i in range(0,len(data['msglist'])):
+            if data['msglist'][i]==None:
+	        break
+	    content=data['msglist'][i]['content']
+	    create_time=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(data['msglist'][i]['created_time']))
+	    cmtnum=data['msglist'][i]['cmtnum']
+	    tid=str(data['msglist'][i]['tid'])
+	    name=data['msglist'][i]['name']
+	    emotions.append((uin,name,tid,content,create_time,cmtnum))
+	    if int(cmtnum)>0:
+	        commentlist=data['msglist'][i]['commentlist']
+                for j in range(0,len(commentlist)):
+	            if commentlist[j]==None:
+	                break;
+	            c_qq=str(commentlist[j]['uin'])
+	            c_content=str(commentlist[j]['content'])
+	            c_createTime=str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(commentlist[j]['create_time'])))
+	            c_name=str(commentlist[j]['name'])
+	            comments.append((uin,name,c_qq,tid,c_name,c_content,c_createTime))
+	            #logging.info(c_qq+tid+c_name+c_content+c_createTime+str(len(comments)))
+		    if len(c_qq)>12:
+		        logging.info(commentlist[j])
+		    else:
+		        savefriend((c_qq,uin,c_name,'','','0'))
+        if len(emotions)>0:
+            saveemotion(emotions)
+        if len(comments)>0:
+            savecomment(comments)
+        print "qq:",uin,"pos:",pos,"...save emotion count is ",len(emotions)," comment count is ",len(comments)
+        logging.info("qq:"+str(uin)+"pos:"+str(pos)+" over..")
+def begin(friend,list=None):
+    if list==None:
+        list=getfriends(friend)
+    while list!=None and len(list)>0:
+        count=len(list)
+        for f in list:
+	    count=count-1
+            errtime=0
+	    begin=0
+	    if getchecked(f[1])==0:
+	        print "begin get ",f[1]," emotion ",count
+                while True:
+                    try:
+                        if errtime > 1:
+                            break
+                        TaotHandler(f[1],begin,num)
+                        #time.sleep(checkFrequency)
+                        errtime = 0
+	                begin=begin+20
+                    except Exception, e:
+                        print e
+                        errtime = errtime + 1
+		updateFlag(f[1])
+		savechecked((f[1],f[2]))
+                print "over get ",f[1]," emotion "
+	    else:
+	        print f[1]," has been checked"
+        list=getfriends(friend)
 # -----------------
 # 主程序
 # -----------------
 if __name__ == "__main__":
+    global qq,num
     vpath = './v.jpg'
-    qq = 2421181819
-    friend=814180665
+    qq= 2421181819
     num=20
     if len(sys.argv) > 1:
         vpath = sys.argv[1]
@@ -193,16 +277,6 @@ if __name__ == "__main__":
         conn.select_db('qzone')
     except MySQLdb.Error,e:
         print "Mysql Error %d: %s" % (e.args[0], e.args[1])
-    errtime=0
-    count=0
-    while True:
-        try:
-            if errtime > 5:
-                break
-            TaotHandler(qq,friend,count,num)
-            time.sleep(checkFrequency)
-            errtime = 0
-	    count=count+20
-        except Exception, e:
-            print e
-            errtime = errtime + 1
+    friend="2421181819"
+    #begin(friend,[('0',friend,'naweixians')])
+    begin(friend)
