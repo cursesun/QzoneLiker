@@ -121,13 +121,60 @@ def getGTK(skey):
 
 def saveemotion(values):
     try:
-        cur.executemany('insert into qz_emotion(`qq`,`name`,`tid`,`content`,`create_time`,`comment_num`) values(%s,%s,%s,%s,%s,%s)',values)
+        cur.executemany('insert into qz_emotion(`qq`,`name`,`tid`,`content`,`create_time`,`comment_num`,`source_name`) values(%s,%s,%s,%s,%s,%s,%s)',values)
         conn.commit()
     except MySQLdb.Error,e:
         print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 def savecomment(values):
     try:
         cur.executemany('insert into qz_comment(`qq`,`qq_name`,`comment_qq`,`tid`,`comment_name`,`content`,`create_time`) values(%s,%s,%s,%s,%s,%s,%s)',values)
+	conn.commit()
+    except MySQLdb.Error,e:
+        print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+
+def getallfriends(who):
+    try:
+        aa=cur.execute('select * from qz_friend where who='+str(who))
+	print "get ",who," friends count ",aa
+	info = cur.fetchmany(aa)
+	return info
+    except MySQLdb.Error,e:
+        print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+    return None
+def getnotcheckedfriends(who):
+    try:
+        aa=cur.execute('select * from qz_friend where flag=0 and who='+str(who))
+	print "get ",who," friends count ",aa
+	info = cur.fetchmany(aa)
+	return info
+    except MySQLdb.Error,e:
+        print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+    return None
+def getfriendsbyvisited(visited):
+    try:
+        aa=cur.execute('select * from qz_friend where visited=%s',visited)
+	info = cur.fetchmany(aa)
+	return info
+    except MySQLdb.Error,e:
+        print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+    return None
+def getfriendsbyneedinfo(who):
+    try:
+        aa=cur.execute('select * from qz_friend where visited!=-1 and who=%s',who)
+	info = cur.fetchmany(aa)
+	return info
+    except MySQLdb.Error,e:
+        print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+    return None
+def cannotvisit(uin):
+    try:
+        cur.execute('update qz_friend set visited=-1 where qq='+str(uin))
+	conn.commit()
+    except MySQLdb.Error,e:
+        print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+def saveuserinfo(value):
+    try:
+        cur.execute('update qz_friend set country=%s,province=%s,city=%s,address=%s,age=%s,sex=%s,birthyear=%s,birthday=%s,birth=%s,nickname=%s,visited=1 where qq=%s',value)
 	conn.commit()
     except MySQLdb.Error,e:
         print "Mysql Error %d: %s" % (e.args[0], e.args[1])
@@ -139,33 +186,91 @@ def updateFlag(who):
         print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 def savefriend(value):
     try:
-        cur.execute('insert into qz_friend(`qq`,`who`,`name`,`sex`,`address`,`online`) values(%s,%s,%s,%s,%s,%s)  ON DUPLICATE KEY UPDATE online=0',value)
+        cur.execute('insert ignore into qz_friend(`qq`,`who`,`name`,`sex`,`address`,`visited`) values(%s,%s,%s,%s,%s,%s)',value)
 	conn.commit()
     except MySQLdb.Error,e:
         print "Mysql Error %d: %s" % (e.args[0], e.args[1])
-def getfriends(who):
+def savefriends(values):
     try:
-        aa=cur.execute('select * from qz_friend where flag=0 and who='+str(who))
-	print "get ",who," friends count ",aa
-	info = cur.fetchmany(aa)
-	return info
+        cur.executemany('insert ignore into qz_friend(`who`,`qq`,`name`) values(%s,%s,%s)',values)
+	conn.commit()
     except MySQLdb.Error,e:
-        print "Mysql Error %d: %s" % (e.args[0], e.args[1])
-    return None
+        print "Mysql Error %d: %s" % (e.args[0], e.args[1])    
 def savechecked(value):
     try:
         cur.execute('insert into qz_checked(`qq`,`name`) values(%s,%s)',value)
 	conn.commit()
     except MySQLdb.Error,e:
         print "Mysql Error %d: %s" % (e.args[0], e.args[1])
-def getchecked(qq):
+def getchecked(uin):
     try:
-        count=cur.execute('select * from qz_checked where qq='+str(qq))
+        count=cur.execute('select * from qz_checked where qq='+str(uin))
 	return count
     except MySQLdb.Error,e:
         print "Mysql Error %d: %s" % (e.args[0], e.args[1])
     return 1
 
+def GetUserInfo(uin):
+    refer="http://user.qzone.qq.com/"+uin
+    html = HttpClient_Ist.Get('http://user.qzone.qq.com/p/base.s8/cgi-bin/user/cgi_userinfo_get_all?uin={0}&vuin={1}&fupdate=1&rd=0.8255438883733334&g_tk={2}'.format(uin,QQ,str(getGTK(skey))), refer)
+    html=html.replace('_Callback(','')
+    html=html.replace(');','')
+    code=0
+    message=''
+    try:
+        data=json.loads(html)
+	code=data['code']
+	message=data['message']
+        if data['data']!=None:
+	    country=data['data']['country']
+	    if country=='':
+	        country=data['data']['hco']
+	    province=data['data']['province']
+	    if province=='':
+	        province=data['data']['hp']
+	    city=data['data']['city']
+	    if city=='':
+	        city=data['data']['hc']
+	    address=country+province+city
+	    age=data['data']['age']
+	    sex=data['data']['sex']
+	    birthyear=data['data']['birthyear']
+	    birthday=data['data']['birthday']
+	    birth=str(birthyear)+"-"+str(birthday)
+	    nickname=data['data']['nickname']
+	    saveuserinfo((country,province,city,address,age,sex,birthyear,birthday,birth,nickname,uin))
+	    print "save",uin," userinfo success"
+    except Exception,e:
+        print "=============save ",uin," userinfo fails",message
+	if code==-99997:
+	    os._exit(0)
+	#cannotvisit(uin)
+    return
+
+def GetFriends(uin):
+    if uin!=QQ:
+        print "QQ not equals uin"
+	return []
+    message=''
+    code=0
+    try:
+        refer="http://ctc.qzs.qq.com/qzone/v8/pages/friends/friend_index.html"
+        html = HttpClient_Ist.Get('http://r.qzone.qq.com/cgi-bin/tfriend/friend_ship_manager.cgi?uin={0}&do=1&rd=0.8040608533192426&fupdate=1&clean=1&g_tk={1}'.format(uin,str(getGTK(skey))), refer)
+        html=html.replace('_Callback(','')
+        html=html.replace(');','')
+        data=json.loads(html)
+        friends=[]
+        if data['data']!=None:
+            if data['data']['items_list']>0:
+                for i in range(0,len(data['data']['items_list'])):
+	            f_qq=data['data']['items_list'][i]['uin']
+		    f_name=data['data']['items_list'][i]['name']
+		    print f_qq
+		    friends.append((uin,f_qq,f_name))
+        return friends
+    except Exception,e:
+        print "=============get ",uin," friends fails",message,code
+    return []
 def GetVisitor(who):
     refer="http://ctc.qzs.qq.com/qzone/v6/friend_manage/visitors.html"
     html = HttpClient_Ist.Get('http://g.qzone.qq.com/cgi-bin/friendshow/cgi_get_visitor_simple?uin={0}&mask=2&g_tk={1}&page=1&fupdate=1'.format(who,str(getGTK(skey))), refer)
@@ -178,19 +283,16 @@ def GetVisitor(who):
             for i in range(0,len(data['data']['items'])):
 	        uin=data['data']['items'][i]['uin']
 		name=data['data']['items'][i]['name']
-		online=data['data']['items'][i]['online']
 		visit_time=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(data['data']['items'][i]['time']))
-		friends.append((uin,who,name,'','',online))
+		friends.append((uin,who,name,'',''))
     return friends
 
 def TaotHandler(uin,pos,num):
     refer="http://cnc.qzs.qq.com/qzone/app/mood_v6/html/index.html"
-    html = HttpClient_Ist.Get('http://taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6?uin={0}&inCharset=utf-8&outCharset=utf-8&hostUin={1}&notice=0&sort=0&pos={2}&num={3}&cgi_host=http%3A%2F%2Ftaotao.qq.com%2Fcgi-bin%2Femotion_cgi_msglist_v6&code_version=1&format=jsonp&need_private_comment=1&g_tk={4}'.format(uin,qq,pos,num,str(getGTK(skey))), refer)
+    html = HttpClient_Ist.Get('http://taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6?uin={0}&inCharset=utf-8&outCharset=utf-8&hostUin={1}&notice=0&sort=0&pos={2}&num={3}&cgi_host=http%3A%2F%2Ftaotao.qq.com%2Fcgi-bin%2Femotion_cgi_msglist_v6&code_version=1&format=jsonp&need_private_comment=1&g_tk={4}'.format(uin,QQ,pos,num,str(getGTK(skey))), refer)
     html=html.replace('_Callback(','')
     html=html.replace(');','')
-    if 'msglist' not in html:
-        raise StandardError("msglist not found")
-    if 'msglist' in html:
+    try:
         data=json.loads(html)
         emotions=[]
         comments=[]
@@ -202,7 +304,8 @@ def TaotHandler(uin,pos,num):
 	    cmtnum=data['msglist'][i]['cmtnum']
 	    tid=str(data['msglist'][i]['tid'])
 	    name=data['msglist'][i]['name']
-	    emotions.append((uin,name,tid,content,create_time,cmtnum))
+	    source_name=data['msglist'][i]['source_name']
+	    emotions.append((uin,name,tid,content,create_time,cmtnum,source_name))
 	    if int(cmtnum)>0:
 	        commentlist=data['msglist'][i]['commentlist']
                 for j in range(0,len(commentlist)):
@@ -214,19 +317,24 @@ def TaotHandler(uin,pos,num):
 	            c_name=str(commentlist[j]['name'])
 	            comments.append((uin,name,c_qq,tid,c_name,c_content,c_createTime))
 	            #logging.info(c_qq+tid+c_name+c_content+c_createTime+str(len(comments)))
-		    if len(c_qq)>12:
-		        logging.info(commentlist[j])
-		    else:
+		    if len(c_qq)<=12:
 		        savefriend((c_qq,uin,c_name,'','','0'))
+		        #logging.info("========c_qq=========="+commentlist[j])
         if len(emotions)>0:
             saveemotion(emotions)
         if len(comments)>0:
             savecomment(comments)
         print "qq:",uin,"pos:",pos,"...save emotion count is ",len(emotions)," comment count is ",len(comments)
-        logging.info("qq:"+str(uin)+"pos:"+str(pos)+" over..")
-def begin(friend,list=None):
+    except Exception,e:
+        #logging.info("===========html json========="+html)
+	logging.info("===========html json========="+uin+e)
+        raise StandardError(e)
+
+#如果list不为None，则爬取list一个人的说说后再爬取他好友的说说，注意这里的root_qq最好要有很多说说
+#如果list为None，则爬取friend的所有好友的说说
+def begin(root_qq,list=None):
     if list==None:
-        list=getfriends(friend)
+        list=getnotcheckedfriends(root_qq)
     while list!=None and len(list)>0:
         count=len(list)
         for f in list:
@@ -234,49 +342,73 @@ def begin(friend,list=None):
             errtime=0
 	    begin=0
 	    if getchecked(f[1])==0:
-	        print "begin get ",f[1]," emotion ",count
+	        print "===============begin get ",f[1]," emotions index is ",count
                 while True:
                     try:
                         if errtime > 1:
                             break
-                        TaotHandler(f[1],begin,num)
+                        TaotHandler(f[1],begin,num) #爬取用户的说说，评论，以及好友
                         #time.sleep(checkFrequency)
                         errtime = 0
 	                begin=begin+20
                     except Exception, e:
                         print e
                         errtime = errtime + 1
-		updateFlag(f[1])
-		savechecked((f[1],f[2]))
-                print "over get ",f[1]," emotion "
+		updateFlag(f[1])#更新qz_friend，表示该用户已经爬取过
+		savechecked((f[1],f[2]))#更新qz_checked，表示该用户已经爬取过
+                print "===============over  get ",f[1]," emotions"
 	    else:
 	        print f[1]," has been checked"
-        list=getfriends(friend)
+		updateFlag(f[1])#更新qz_friend，表示该用户已经爬取过
+        list=getnotcheckedfriends(root_qq)
+def getloginqqfriend():
+    friends=GetFriends(QQ)
+    if len(friends)>0:
+        savefriends(friends)
+def fillfriendsinfo(uin):
+    oldlist=[]
+    temp=getfriendsbyneedinfo(uin)
+    if temp!=None and len(temp)>0:
+        print "get ",uin," friends info"
+        for t in temp:
+	    if t[1] not in oldlist:
+	        GetUserInfo(t[1])
+		oldlist.append(t[1])
 # -----------------
 # 主程序
 # -----------------
 if __name__ == "__main__":
-    global qq,num
+    global QQ,num,checked
+    global conn,cur
     vpath = './v.jpg'
-    qq= 2421181819
+    QQ= 2421181819
     num=20
+    checked=[]
     if len(sys.argv) > 1:
         vpath = sys.argv[1]
     if len(sys.argv) > 2:
-        qq = sys.argv[2]
-
+        QQ = sys.argv[2]
     try:
-        qqLogin = Login(vpath, qq)
+        qqLogin = Login(vpath, QQ)
     except Exception, e:
         print str(e)
         os._exit()
     try:
-        global conn,cur
         conn=MySQLdb.connect(host='127.0.0.1',user='root',passwd='moshu521',port=3306,charset='utf8')
         cur=conn.cursor()
         conn.select_db('qzone')
     except MySQLdb.Error,e:
         print "Mysql Error %d: %s" % (e.args[0], e.args[1])
-    friend="2421181819"
-    #begin(friend,[('0',friend,'naweixians')])
-    begin(friend)
+    
+    roots=getallfriends(QQ)
+    if len(roots)>0:
+        for root in roots:
+	    print root[1],"is root begin..."
+	    begin(root[1])
+	    print root[1],"is root over..."
+	    
+    #root_qq="853912656"
+    #begin(root_qq)
+    #begin(root_qq,[('0',root_qq,'naweixians')])
+    #getloginqqfriend()
+    #fillfriendsinfo("742814483")

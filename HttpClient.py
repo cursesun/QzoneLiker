@@ -18,6 +18,8 @@ class HttpClient:
             return urllib2.urlopen(req,timeout=10).read()
         except urllib2.HTTPError, e:
             return e.read()
+	except Exception,ee:
+	    return ""
 
     def Post(self, url, data, refer=None):
         try:
