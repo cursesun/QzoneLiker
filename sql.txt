@@ -1,0 +1,57 @@
+CREATE TABLE `qz_checked` (
+  `qq` varchar(12) NOT NULL DEFAULT '',
+  `name` varchar(150) DEFAULT NULL,
+  `infos_flag` int(11) DEFAULT '0',
+  PRIMARY KEY (`qq`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+
+
+CREATE TABLE `qz_comment` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tid` varchar(50) DEFAULT NULL,
+  `qq` varchar(150) DEFAULT NULL,
+  `qq_name` varchar(150) DEFAULT NULL,
+  `comment_qq` varchar(150) DEFAULT NULL,
+  `comment_name` varchar(150) DEFAULT NULL,
+  `content` text,
+  `create_time` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2749014 DEFAULT CHARSET=utf8
+
+CREATE TABLE `qz_emotion` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tid` varchar(50) DEFAULT NULL,
+  `name` varchar(150) DEFAULT NULL,
+  `qq` varchar(150) DEFAULT NULL,
+  `content` text,
+  `create_time` datetime DEFAULT NULL,
+  `comment_num` int(11) DEFAULT NULL,
+  `source_name` varchar(150) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1569439 DEFAULT CHARSET=utf8
+
+CREATE TABLE `qz_friend` (
+  `who` varchar(150) NOT NULL DEFAULT '',
+  `qq` varchar(150) NOT NULL DEFAULT '',
+  `nickname` varchar(150) DEFAULT NULL,
+  `name` varchar(150) DEFAULT NULL,
+  `age` int(11) DEFAULT NULL,
+  `sex` varchar(10) DEFAULT NULL,
+  `address` varchar(250) DEFAULT NULL,
+  `country` varchar(250) DEFAULT NULL,
+  `province` varchar(250) DEFAULT NULL,
+  `city` varchar(250) DEFAULT NULL,
+  `birthyear` varchar(50) DEFAULT NULL,
+  `birthday` varchar(30) DEFAULT NULL,
+  `birth` varchar(100) DEFAULT NULL,
+  `visited` int(11) DEFAULT '0',
+  `visit_time` datetime DEFAULT NULL,
+  `flag` int(11) DEFAULT '0',
+  PRIMARY KEY (`who`,`qq`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+
+CREATE TABLE `qz_wordcounts` (
+  `word` varchar(200) NOT NULL,
+  `count` int(11) DEFAULT '1',
+  UNIQUE KEY `unique_word` (`word`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
