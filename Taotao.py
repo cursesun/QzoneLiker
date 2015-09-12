@@ -402,8 +402,10 @@ if __name__ == "__main__":
     
     roots=getallfriends(QQ)
     if len(roots)>0:
+        ll=len(roots)
         for root in roots:
-	    print root[1],"is root begin..."
+	    ll=ll-1
+	    print root[1],"is root begin...",ll
 	    begin(root[1])
 	    print root[1],"is root over..."
 	    
