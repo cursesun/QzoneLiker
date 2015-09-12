@@ -47,29 +47,29 @@ def getReValue(html, rex, er, ex):
     return v.group(1)
     
 # -----------------
-# µÇÂ½
+# ç™»é™†
 # -----------------
 class Login(HttpClient):
     MaxTryTime = 5
 
     def __init__(self, vpath, qq=0):
         global UIN, Referer, skey
-        self.VPath = vpath  # QRCode±£´æÂ·¾¶
+        self.VPath = vpath  # QRCodeä¿å­˜è·¯å¾„
         AdminQQ = int(qq)
-        print "ÕýÔÚ»ñÈ¡µÇÂ½Ò³Ãæ"
+        print "æ­£åœ¨èŽ·å–ç™»é™†é¡µé¢"
         self.setCookie('_qz_referrer','qzone.qq.com','qq.com')
         self.Get(QzoneLoginUrl,'http://qzone.qq.com/')
         StarTime = date_to_millis(datetime.datetime.utcnow())
         T = 0
         while True:
-            T = T + 1
+			T = T + 1
             self.Download('http://ptlogin2.qq.com/ptqrshow?appid=549000912&e=2&l=M&s=3&d=72&v=4&daid=5', self.VPath)
             LoginSig = self.getCookie('pt_login_sig')
             print '[{0}] Get QRCode Picture Success.'.format(T)          
             while True:
                 html = self.Get('http://ptlogin2.qq.com/ptqrlogin?u1=http%3A%2F%2Fqzs.qq.com%2Fqzone%2Fv5%2Floginsucc.html%3Fpara%3Dizone&ptredirect=0&h=1&t=1&g=1&from_ui=1&ptlang=2052&action=0-0-{0}&js_ver=10131&js_type=1&login_sig={1}&pt_uistyle=32&aid=549000912&daid=5&pt_qzone_sig=1'.format(date_to_millis(datetime.datetime.utcnow()) - StarTime, LoginSig), QzoneLoginUrl)
                 ret = html.split("'")
-                if ret[1] == '65' or ret[1] == '0':  # 65: QRCode Ê§Ð§, 0: ÑéÖ¤³É¹¦, 66: Î´Ê§Ð§, 67: ÑéÖ¤ÖÐ
+                if ret[1] == '65' or ret[1] == '0':  # 65: QRCode å¤±æ•ˆ, 0: éªŒè¯æˆåŠŸ, 66: æœªå¤±æ•ˆ, 67: éªŒè¯ä¸­
                     break
                 time.sleep(2)
             if ret[1] == '0' or T > self.MaxTryTime:
@@ -77,13 +77,13 @@ class Login(HttpClient):
 
         if ret[1] != '0':
             return
-        print "¶þÎ¬ÂëÒÑÉ¨Ãè£¬ÕýÔÚµÇÂ½"
+        print "äºŒç»´ç å·²æ‰«æï¼Œæ­£åœ¨ç™»é™†"
         
-        # É¾³ýQRCodeÎÄ¼þ
+        # åˆ é™¤QRCodeæ–‡ä»¶
         if os.path.exists(self.VPath):
             os.remove(self.VPath)
 
-        # ¼ÇÂ¼µÇÂ½ÕËºÅµÄêÇ³Æ
+        # è®°å½•ç™»é™†è´¦å·çš„æ˜µç§°
         tmpUserName = ret[11]
 
         self.Get(ret[5])
@@ -92,8 +92,8 @@ class Login(HttpClient):
         skey = self.getCookie('skey')
 
 # -----------------
-# ¼ÆËãg_tk
-# -----------------  
+# è®¡ç®—g_tk
+# -----------------   
 def utf8_unicode(c):            
     if len(c)==1:                                 
         return ord(c)
@@ -147,7 +147,7 @@ def getnotcheckedfriends(who):
 	print "get ",who," friends count ",aa
 	info = cur.fetchmany(aa)
 	return info
-    except MySQLdb.Error,e:
+	except MySQLdb.Error,e:
         print "Mysql Error %d: %s" % (e.args[0], e.args[1])
     return None
 def getfriendsbyvisited(visited):
@@ -330,8 +330,8 @@ def TaotHandler(uin,pos,num):
 	logging.info("===========html json========="+uin+e)
         raise StandardError(e)
 
-#Èç¹ûlist²»ÎªNone£¬ÔòÅÀÈ¡listÒ»¸öÈËµÄËµËµºóÔÙÅÀÈ¡ËûºÃÓÑµÄËµËµ£¬×¢ÒâÕâÀïµÄroot_qq×îºÃÒªÓÐºÜ¶àËµËµ
-#Èç¹ûlistÎªNone£¬ÔòÅÀÈ¡friendµÄËùÓÐºÃÓÑµÄËµËµ
+#å¦‚æžœlistä¸ä¸ºNoneï¼Œåˆ™çˆ¬å–listä¸€ä¸ªäººçš„è¯´è¯´åŽå†çˆ¬å–ä»–å¥½å‹çš„è¯´è¯´ï¼Œæ³¨æ„è¿™é‡Œçš„root_qqæœ€å¥½è¦æœ‰å¾ˆå¤šè¯´è¯´
+#å¦‚æžœlistä¸ºNoneï¼Œåˆ™çˆ¬å–friendçš„æ‰€æœ‰å¥½å‹çš„è¯´è¯´
 def begin(root_qq,list=None):
     if list==None:
         list=getnotcheckedfriends(root_qq)
@@ -347,19 +347,19 @@ def begin(root_qq,list=None):
                     try:
                         if errtime > 1:
                             break
-                        TaotHandler(f[1],begin,num) #ÅÀÈ¡ÓÃ»§µÄËµËµ£¬ÆÀÂÛ£¬ÒÔ¼°ºÃÓÑ
+                        TaotHandler(f[1],begin,num) #çˆ¬å–ç”¨æˆ·çš„è¯´è¯´ï¼Œè¯„è®ºï¼Œä»¥åŠå¥½å‹
                         #time.sleep(checkFrequency)
                         errtime = 0
 	                begin=begin+20
                     except Exception, e:
                         print e
                         errtime = errtime + 1
-		updateFlag(f[1])#¸üÐÂqz_friend£¬±íÊ¾¸ÃÓÃ»§ÒÑ¾­ÅÀÈ¡¹ý
-		savechecked((f[1],f[2]))#¸üÐÂqz_checked£¬±íÊ¾¸ÃÓÃ»§ÒÑ¾­ÅÀÈ¡¹ý
+		updateFlag(f[1])#æ›´æ–°qz_friendï¼Œè¡¨ç¤ºè¯¥ç”¨æˆ·å·²ç»çˆ¬å–è¿‡
+		savechecked((f[1],f[2]))#æ›´æ–°qz_checkedï¼Œè¡¨ç¤ºè¯¥ç”¨æˆ·å·²ç»çˆ¬å–è¿‡
                 print "===============over  get ",f[1]," emotions"
 	    else:
 	        print f[1]," has been checked"
-		updateFlag(f[1])#¸üÐÂqz_friend£¬±íÊ¾¸ÃÓÃ»§ÒÑ¾­ÅÀÈ¡¹ý
+		updateFlag(f[1])#æ›´æ–°qz_friendï¼Œè¡¨ç¤ºè¯¥ç”¨æˆ·å·²ç»çˆ¬å–è¿‡
         list=getnotcheckedfriends(root_qq)
 def getloginqqfriend():
     friends=GetFriends(QQ)
@@ -375,7 +375,7 @@ def fillfriendsinfo(uin):
 	        GetUserInfo(t[1])
 		oldlist.append(t[1])
 # -----------------
-# Ö÷³ÌÐò
+# ä¸»ç¨‹åº
 # -----------------
 if __name__ == "__main__":
     global QQ,num,checked
@@ -393,6 +393,7 @@ if __name__ == "__main__":
     except Exception, e:
         print str(e)
         os._exit()
+    os.startfile('v.jpg')
     try:
         conn=MySQLdb.connect(host='127.0.0.1',user='root',passwd='moshu521',port=3306,charset='utf8')
         cur=conn.cursor()
@@ -400,14 +401,14 @@ if __name__ == "__main__":
     except MySQLdb.Error,e:
         print "Mysql Error %d: %s" % (e.args[0], e.args[1])
     
-    roots=getallfriends(QQ)
-    if len(roots)>0:
-        ll=len(roots)
-        for root in roots:
-	    ll=ll-1
-	    print root[1],"is root begin...",ll
-	    begin(root[1])
-	    print root[1],"is root over..."
+    #roots=getallfriends(QQ)
+    #if len(roots)>0:
+    #    ll=len(roots)
+    #    for root in roots:
+	#    ll=ll-1
+	#    print root[1],"is root begin...",ll
+	#    begin(root[1])
+	#    print root[1],"is root over..."
 	    
     #root_qq="853912656"
     #begin(root_qq)
