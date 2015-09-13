@@ -343,7 +343,7 @@ def	begin(root_qq,list=None):
 					try:
 						if errtime > 1:
 							break
-						TaotHandler(f[1],begin,num)	#爬取用户的说说，评论，以及好友
+						TaotHandler(f[1],begin,20)	#爬取用户的说说，评论，以及好友
 						#time.sleep(checkFrequency)
 						errtime	= 0
 						begin=begin+20
