@@ -1,0 +1,23 @@
+下载地址：http://www.advsofteng.com/download.html （Python版）
+
+解压后在python的安装目录下（例如：F:\Python27\Lib\site-packages\）下新建一个chartdirector文件夹
+将解压后的lib文件夹中的文件复制到chartdirector中，并在site-packages目录中新建一个chartdirector.pth文件，内容为：
+
+```
+# chartdirector packages configuration
+chartdirector
+```
+
+然后在代码中 import pychartdir即可
+
+
+中文乱码
+将中文字体文件mingliu.ttc、simsun.ttc复制到site-packages
+然后使用
+c.setDefaultFonts("simsun.ttc")
+或者
+c = PieChart(560, 270, goldColor(), -1, 1)
+c.setDefaultFonts("simsun.ttc")
+# Add a title box using 15pt Times Bold Italic font and metallic pink background color
+c.addTitle("这里是标题", "simsun.ttc", 15).setBackground(metalColor(0xff9999))
+来指定字体
